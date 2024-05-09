@@ -1,59 +1,74 @@
 import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Tabs, useSegments } from 'expo-router';
 
 import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+  const segments = useSegments();
   return (
+    <GestureHandlerRootView style={{flex:1}}>
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
+        tabBarStyle:{
+          backgroundColor: Colors.background,
+          height: 65,
+          borderRadius:100
+        },
+        tabBarActiveTintColor:Colors.green,
+        tabBarActiveBackgroundColor:Colors.lightGreen,
+        tabBarInactiveBackgroundColor:Colors.background,
+        tabBarItemStyle:{borderRadius:10},
+        tabBarHideOnKeyboard:true,
+        headerShown:false,
+        tabBarLabelStyle:{fontSize:14,fontWeight:'700'},
       }}>
       <Tabs.Screen
-        name="index"
+        name="chats"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          title: 'Chats',
+          tabBarIcon: ({ size,color }) => <MaterialIcons name="chat" size={size} color={color} />,
+          tabBarStyle:{
+            backgroundColor:Colors.background,
+            height: 65,
+            display:segments[2] === 'chat' ? 'none':'flex'  
+          }
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="updates"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Updates',
+          tabBarIcon: ({ size,color  }) =>   <MaterialIcons name="update" size={size} color={color} />,
+          tabBarStyle:{
+            backgroundColor:Colors.background,
+            height: 65,
+            display:segments[2] === '[id]' ? 'none':'flex'  
+          }
+        }}
+      />
+      <Tabs.Screen
+        name="communities"
+        options={{
+          title: 'Communities',
+          tabBarIcon: ({size,color}) => <MaterialCommunityIcons name="account-group" size={size}   color={color}/>,
+          headerShown:true,
+          headerShadowVisible: false,
+          headerStyle:{backgroundColor:Colors.background},
+          headerTitleStyle:{fontSize:24,fontWeight:"700",color:'rgba(1,1,1,0.7)'},
+        }}
+      />
+      <Tabs.Screen
+        name="calls"
+        options={{
+          title: 'Calls',
+          tabBarIcon: ({ size,color }) => <FontAwesome name="phone" size={size}  color={color}  />,
         }}
       />
     </Tabs>
+    </GestureHandlerRootView>
   );
 }

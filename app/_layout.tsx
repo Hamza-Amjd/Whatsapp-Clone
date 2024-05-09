@@ -1,28 +1,28 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-
-import { useColorScheme } from '@/components/useColorScheme';
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useFonts } from "expo-font";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { Text, View } from "react-native";
+import Colors from "@/constants/Colors";
+import { onAuthStateChanged } from "firebase/auth";
+import { FIREBASE_AUTH } from "@/firebaseConfig";
+import ContextWrapper from "@/context/ContextWrapper";
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
+} from "expo-router";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+const InitialLayout = () => {
+  const [currUser, setCurrUser] = useState<any>({});
+  const [loading, setLoading] = useState(true);
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
   });
 
@@ -37,22 +37,71 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user: any) => {
+      setLoading(false);
+      if (user) {
+
+        setCurrUser(user);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
   if (!loaded) {
-    return null;
+    return <View/>;
   }
 
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <Stack>
+      
+          <Stack.Screen name="index" options={{ headerShown: false,statusBarColor:"white" }} />
+         <Stack.Screen name="SetProfile"  options={{ headerShown: false }} />
+         <Stack.Screen  name="(tabs)" options={{ headerShown: false,statusBarColor:Colors.background }} />
+         <Stack.Screen
+        name="otp"
+        options={{
+          headerTitle: "Enter your phone number",
+          headerBackVisible: false,
+          headerTitleAlign: "center",
+        }}
+      />
+      <Stack.Screen
+        name="verify/[phone]"
+        options={{
+          headerTitle: "Verify your phone number",
+          headerBackVisible: true,
+          headerTitleAlign: "center",
+          statusBarColor:Colors.background
+        }}
+      />
+
+      <Stack.Screen
+        name="(modals)/new-chat"
+        options={{
+          headerShown: true,
+          title: "Select Contact",
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: Colors.background },
+          headerTitleStyle: { fontSize: 16 },
+          presentation: "modal",
+          headerBackTitleVisible: false,
+          statusBarColor:Colors.background
+        }}
+      />
+    </Stack>
   );
-}
+};
+
+const RootLayoutNav = () => {
+  return (
+    <ContextWrapper>
+      <InitialLayout />
+    </ContextWrapper>
+  );
+};
+export default RootLayoutNav;
+
+
