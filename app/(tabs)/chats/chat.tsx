@@ -24,6 +24,7 @@ import ImageView from "react-native-image-viewing";
 import Avatar from "@/components/Avatar";
 
 const randomId =nanoid()
+
 const chatpage = () => {
   const route:any = useRoute();
   const userB:any = route.params.user;
@@ -82,6 +83,7 @@ useEffect(() => {
     const emailHash = `${currentUser?.email}:${userB.email}`;
       setRoomHash(emailHash);
       if (selectedImage && selectedImage.uri) {
+        console.log("chatimg :",selectedImage)
         await sendImage(selectedImage.uri, emailHash);
       }
   })();
@@ -148,7 +150,7 @@ async function handlePhotoPicker() {
     return (
       <InputToolbar
         {...props}
-        containerStyle={{ backgroundColor: Colors.background,paddingVertical:6 }}
+        containerStyle={{ backgroundColor: Colors.background,paddingVertical:6}}
         renderActions={() => (
           <View style={{ height: 44, justifyContent: 'center', alignItems: 'center', left: 5 }}>
             <Ionicons name="add" color={Colors.primary} size={28} />
@@ -222,9 +224,10 @@ async function handlePhotoPicker() {
           user={senderUser}
           onInputTextChanged={setText}
           bottomOffset={20}
-          renderAvatar={null}
           textInputProps={styles.composer}
+          maxComposerHeight={60}
           timeTextStyle={{right:{color:Colors.Grayrgba}}}
+          
           renderBubble={(props) => (
             <Bubble
               {...props}
@@ -256,7 +259,6 @@ async function handlePhotoPicker() {
             </View>
           )}
           renderInputToolbar={renderInputToolbar}
-          
           renderChatFooter={() => (
             <ReplyMessageBar  clearReply={() => setReplyMessage(null)} message={replyMessage}  />
           )}
@@ -268,6 +270,7 @@ async function handlePhotoPicker() {
               updateRowRef={updateRowRef}
             />
           )}
+          
           renderMessageImage={(props:any) => {
             return (
               <View style={{ borderRadius: 15, padding: 2 }}>
@@ -290,6 +293,7 @@ async function handlePhotoPicker() {
                   />
                   {selectedImageView ? (
                     <ImageView
+                    backgroundColor={Colors.background}
                       imageIndex={0}
                       visible={modalVisible}
                       onRequestClose={() => setModalVisible(false)}

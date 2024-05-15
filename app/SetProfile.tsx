@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Image,
   StyleSheet,
   Text,
@@ -18,10 +19,11 @@ import { router, useNavigation } from "expo-router";
 
 
 const SetProfile = () => {
-    const navigate=useNavigation(); 
   const [selectedImg, setselectedImg] = useState<ImagePickerAsset>();
   const [displayName, setDisplayName] = useState("");
   const [permission, setPermission] = useState<PermissionStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     (async () => {
       const status = await askPermission();
@@ -37,7 +39,7 @@ const SetProfile = () => {
     return () => unsubscribe();
   }, []);
   if (!permission) {
-    return <Text>Loading</Text>;
+    return <View/>;
   }
   if (permission !== "granted") {
     return <Text>You need to allow this permission</Text>;
@@ -51,6 +53,7 @@ const SetProfile = () => {
   };
 
   const handlePress = async () => {
+    setLoading(true);
     let user:any= FIREBASE_AUTH.currentUser;
     let photoURL:any
     if (selectedImg) {
@@ -111,9 +114,12 @@ const SetProfile = () => {
         style={[styles.button, displayName!=="" ? styles.enabled : null]}
         onPress={handlePress}
       >
-        <Text style={[styles.buttontxt, displayName!=="" ? styles.enabled : null]}>
+        {
+          loading?<ActivityIndicator color={"#fff"}/>:<Text style={[styles.buttontxt, displayName!=="" ? styles.enabled : null]}>
           Next
         </Text>
+        }
+        
       </TouchableOpacity>
     </View>
   );

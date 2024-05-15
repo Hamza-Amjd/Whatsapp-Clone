@@ -20,9 +20,6 @@ export const getImage = async (reference: any) => {
 
   
   export const uploadImage=async(uri:any, path:any, fName:any)=> {
-    console.log(uri);
-    console.log(path);
-    console.log(fName);
     // Why are we using XMLHttpRequest? See:
     // https://github.com/expo/expo/issues/2402#issuecomment-443726662
     const blob:any = await new Promise((resolve, reject) => {

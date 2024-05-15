@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Button, Image, StyleSheet, Text, View } from "react-native";
 import React from "react";
 import AppleStyleSwipeableRow from "./AppleStyleSwipableRow";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -7,18 +7,21 @@ import Colors from "@/constants/Colors";
 import { useNavigation } from "expo-router";
 import Avatar from "./Avatar";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { FIREBASE_AUTH } from "@/firebaseConfig";
 type ListItemProps = {
   type: string;
+  lastMessageSender: any|null;
   description: string|null;
   room: any;
   time: any|null;
   user: any;
   index: number;
-  image: string | null;
+  image: any | null;
 };
 const ListItem: React.FC<ListItemProps> = ({
   type,
   description,
+  lastMessageSender,
   room,
   time,
   user,
@@ -28,6 +31,7 @@ const ListItem: React.FC<ListItemProps> = ({
   const AnimatedTouchableOpacity =
     Animated.createAnimatedComponent(TouchableOpacity);
   const navigation = useNavigation<any>();
+  const {currentUser}= FIREBASE_AUTH;
   return (
     <AppleStyleSwipeableRow>
       <AnimatedTouchableOpacity
@@ -39,9 +43,9 @@ const ListItem: React.FC<ListItemProps> = ({
       >
         <View style={styles.listitem}>
           <View style={{ flexDirection: "row", gap: 8 }}>
-            <Avatar user={type == "contacts" ?user?.userdoc:user} size={type === "contacts" ? 40 : 65} />
-            <View style={{justifyContent:'space-evenly'}}>
-              <View style={{flexDirection:'row',justifyContent:'space-between',width:'85%',alignItems:'baseline'}}>
+            <Avatar user={type == "contacts" ?user?.userdoc:user} size={type === "contacts" ? 40 : 60} />
+            <View style={{flex:1,paddingVertical:3}}>
+              <View style={{flexDirection:'row', flex:1, justifyContent:'space-between', alignItems:'baseline'}}>
                 <Text
                 style={{
                   fontSize: 18,
@@ -50,6 +54,7 @@ const ListItem: React.FC<ListItemProps> = ({
               >
                 {user?.contactName || user?.displayName}
               </Text>
+              {image&&<Text style={{color:Colors.muted,textDecorationLine:'underline',marginRight:8}}>Send</Text> }
               {time && (
             <Text
               style={{
@@ -63,9 +68,9 @@ const ListItem: React.FC<ListItemProps> = ({
               
               {description && (
                 <View style={{flexDirection:'row',alignItems:'center',gap:1}}>
-                  <Ionicons name="checkmark-done-outline" size={20} color="cyan" /> 
+                  {description=='Image'?<Ionicons name="image" size={15} color={Colors.gray}/>:lastMessageSender?.name==currentUser?.displayName && <Ionicons name="checkmark-done-outline" size={20} color="cyan" /> }
                   
-                  <Text style={{ fontSize: 14, fontWeight: "400" ,alignItems:'baseline'}}>
+                  <Text style={{ fontSize: 14, fontWeight: "400" ,alignItems:'baseline',color:Colors.gray}}>
                     {description.length > 40? `${description.substring(0, 40)}...`
                     : description}
                 </Text>
@@ -93,7 +98,7 @@ const styles = StyleSheet.create({
   img: {
     width: 60,
     height: 60,
-    borderRadius: 100,
+    borderRadius: 60,
   },
 });
 

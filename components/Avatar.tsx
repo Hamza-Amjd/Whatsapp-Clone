@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Image } from "react-native";
 
-interface avatarProps{
+type avatarProps={
   user: any;
   size: number;
 }
 const Avatar:React.FC<avatarProps>=({ size, user })=> { 
-  const [userdata, setUserdata] = useState(user)
+  const [photo, setPhoto] = useState(user?.photoURL?user.photoURL:null)
   return (
     <Image
       style={{
@@ -15,8 +15,8 @@ const Avatar:React.FC<avatarProps>=({ size, user })=> {
         borderRadius: size,
       }}
       source={
-        userdata.photoURL
-          ? { uri: userdata.photoURL }
+        photo
+          ? { uri: photo }
           : require("@/assets/images/emptyPfp.png")
       }
       resizeMode="cover"

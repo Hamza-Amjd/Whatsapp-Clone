@@ -13,18 +13,27 @@ import {
   Octicons,
   SimpleLineIcons,
 } from "@expo/vector-icons";
-import { Link, Stack } from "expo-router";
+import { Link, Stack, } from "expo-router";
 import { FIREBASE_AUTH, FIRESTORE_APP } from "@/firebaseConfig";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import GlobalContext from "@/context/Context";
 import useContacts from "@/hooks/useHooks";
 import ListItem from "@/components/ListItem";
+import { pickImage } from "@/components/healper";
+import { useNavigation } from "@react-navigation/native";
 
 const index = () => {
+  const navigation:any=useNavigation();
   const { rooms, setRooms, setUnfilteredRooms } = useContext<any>(GlobalContext);
   const contacts=useContacts()
   const [searchText, setSearchText] = useState("");
-  
+  const [searchResults, setSearchResults] = useState([]);
+  useEffect(() => {
+    if (searchText == "") setSearchResults(rooms);
+    else setSearchResults(rooms.filter((item: any) =>
+        item.userB.displayName.toLowerCase().includes(searchText.toLowerCase())
+      ),);
+  }, [searchText]);
 
 const userEmail=FIREBASE_AUTH.currentUser?.email;
 const chatquery = query(collection(FIRESTORE_APP,"rooms"), where('participantsArray', 'array-contains', userEmail));
@@ -33,8 +42,16 @@ function getUserB(user:any, contacts:any) {
     const userContact = contacts.find((c:any) => c?.email === user?.email);
     if (userContact && userContact.contactName) {
       return { ...user, contactName: userContact.contactName };
+    }else{
+      return { ...user, contactName: user.displayName };
     }
   }
+  const image =  async() => {
+    const result:any = await pickImage();    
+    if (!result.cancelled) {
+      navigation.navigate('(modals)/new-chat',{image:result.assets[0]})
+    }
+  };
 
 useEffect(() => {
     const unsubscribe = onSnapshot(chatquery,(querysnapshot)=>{
@@ -42,9 +59,9 @@ useEffect(() => {
         return {
          ...doc.data(),
           id:doc.id,
-          userB:doc.data().participants.find((p:any)=>p.email !== userEmail)
+          userB:doc.data().participants.find((p:any)=>p.email !== userEmail),
         }
-      })
+      }).sort((a:any, b:any) => b.lastMessage.createdAt - a.lastMessage.createdAt);
       setUnfilteredRooms(parsedChats);
       setRooms(parsedChats.filter((doc:any) => doc?.lastMessage))
     })
@@ -60,12 +77,16 @@ useEffect(() => {
             <View
               style={{ flexDirection: "row", gap: 15, alignItems: "center" }}
             >
-              <Feather name="camera" size={25} color={Colors.muted} />
+                <TouchableOpacity onPress={image}>
+                <Feather name="camera" size={25} color={Colors.muted}/>
+              </TouchableOpacity>
+              <TouchableOpacity>
               <SimpleLineIcons
                 name="options-vertical"
                 size={20}
                 color={Colors.muted}
               />
+              </TouchableOpacity>
             </View>
           ),
         }}
@@ -83,18 +104,33 @@ useEffect(() => {
           />
         </View>
         <View >
-        {rooms.map((room:any,index:any) => (
+        {searchResults.length>0? searchResults.map((room:any,index:any) => (
         <ListItem
           type="chat"
           description={room.lastMessage.text}
           key={room.id}
           room={room}
+          lastMessageSender={room?.lastMessage.user}
           time={room?.lastMessage?.createdAt}
           user={getUserB(room.userB, contacts)}
           index={index}
           image={null}
         />
-      ))}
+        )):
+        rooms.map((room:any,index:any) => (
+          <ListItem
+            type="chat"
+            description={room.lastMessage.text}
+            key={room.id}
+            room={room}
+            time={room?.lastMessage?.createdAt}
+            lastMessageSender={room?.lastMessage?.user}
+            user={getUserB(room.userB, contacts)}
+            index={index}
+            image={null}
+          />
+          ))
+        }
         </View>
       </ScrollView>
       <Link href={"/(modals)/new-chat"} asChild>

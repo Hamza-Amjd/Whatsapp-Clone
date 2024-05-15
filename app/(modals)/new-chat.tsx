@@ -5,7 +5,7 @@ import {
   View,
 } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
-import {Stack} from "expo-router";
+import {Stack, useLocalSearchParams} from "expo-router";
 import Colors from "@/constants/Colors";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import {  FIRESTORE_APP } from "@/firebaseConfig";
@@ -38,6 +38,7 @@ return (
   <ListItem 
   index={user.email}
   description={null}
+  lastMessageSender={null}
   time={null}
   type="contacts"
   user={user}
@@ -51,10 +52,18 @@ return (
 
 }
 const newChat = () => {
+  const route:any=useRoute()
   const contacts = useContacts()
   const [loading, setLoading] = useState(false);
-  const route:any = useRoute()
-  const image = route.params && route.params.image;
+  const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  useEffect(() => {
+    if (searchText == "") setSearchResults(contacts);
+    else setSearchResults(contacts.filter((item: any) =>
+        item.contactName.toLowerCase().includes(searchText?.toLowerCase())
+      ),);
+  }, [searchText])
+  const image:any=route.params.image;
   return (
     <>
       <Stack.Screen
@@ -62,7 +71,12 @@ const newChat = () => {
           headerSearchBarOptions: {
             placeholder: "Search",
             hideWhenScrolling: true,
+            onChangeText(e:any) {
+              e.preventDefault()
+              setSearchText(e.nativeEvent.text)
+            },
           },
+          headerBackTitleVisible:false
         }}
       />
       {loading ? (
@@ -73,15 +87,26 @@ const newChat = () => {
         </View>
       ) : (
         <GestureHandlerRootView style={{flex:1}}>
-        <FlatList
-          data={contacts}
-          style={{ marginLeft: 14,flex: 1 }}
-          keyExtractor={(item,index)=>`${index}--${item?.email}`}
-          renderItem={({item}) => (
-            <ContactPreview room={null} contact={item} image={image} />
-          )}
-          
-        /></GestureHandlerRootView>
+          {searchResults.length>0?
+           <FlatList
+           data={searchResults}
+           style={{ marginLeft: 14,flex: 1 }}
+           keyExtractor={(item:any,index)=>`${index}--${item?.email}`}
+           renderItem={({item}) => (
+             <ContactPreview room={null} contact={item} image={image} />
+           )}
+           
+         />: <FlatList
+         data={contacts}
+         style={{ marginLeft: 14,flex: 1 }}
+         keyExtractor={(item,index)=>`${index}--${item?.email}`}
+         renderItem={({item}) => (
+           <ContactPreview room={null} contact={item} image={image} />
+         )}
+         
+       />
+          }
+          </GestureHandlerRootView>
       )}
     </>
   );

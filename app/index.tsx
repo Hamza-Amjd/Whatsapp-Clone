@@ -1,4 +1,4 @@
-import { Image, Linking, LogBox, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, Linking, LogBox, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import Colors from '@/constants/Colors';
 import { router } from 'expo-router';
@@ -11,12 +11,14 @@ LogBox.ignoreLogs([
 const index = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState("signin");
   const openLink = ()=>{
     Linking.openURL('http://whatsapp.com')
   }
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user: any) => {
+      setLoading(false);
       if (user) {
         router.push("/SetProfile");
       }
@@ -24,16 +26,21 @@ const index = () => {
     return () => unsubscribe();
   }, []);
   const handleLogin = () => {
+    setLoading(true);
     if(mode=="signin"){
       signIn(email, password)
+      setLoading(false);
     };
     if(mode=="signup"){
       signUp(email, password)
+      setLoading(false);
     }
   }
+  
   return (
-    <View style={styles.container}> 
-      <Image source={require('@/assets/images/welcome.png')} style={styles.img}/>
+     <>
+    {loading?<View style={styles.container}><ActivityIndicator size={'large'} color={Colors.green}/></View>:
+      <View style={styles.container}><Image source={require('@/assets/images/welcome.png')} style={styles.img}/>
       <Text style={styles.heading}>Welcome to Whatsapp</Text>
       <Text style={styles.description}>
         Read our{' '}
@@ -73,7 +80,7 @@ const index = () => {
       <TouchableOpacity  style={styles.button} onPress={()=>mode=='signin'?setMode("signup"):setMode("signin")}>
         <Text style={{color:Colors.green}} >{mode=='signin'?"Dont have an account? Sign Up":"Already have an account? Sign In"}</Text>
       </TouchableOpacity>
-    </View>
+    </View>}</>
   )
 }
 

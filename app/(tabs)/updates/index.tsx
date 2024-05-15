@@ -138,15 +138,16 @@ const index = () => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (<RenderItem item={item}/> )}
         />
-        <View
-          style={{
+          <TouchableOpacity
+             style={{
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
             paddingBottom: showViewedStatus?0:30,
           }}
-        >
-          <Text
+            onPress={() => setShowViewedStatus(!showViewedStatus)}
+          >
+            <Text
             style={{
               color: Colors.Grayrgba,
               fontSize: 14,
@@ -156,17 +157,13 @@ const index = () => {
           >
             Viewed status
           </Text>
-          <TouchableOpacity
-            style={{ marginRight: 10 }}
-            onPress={() => setShowViewedStatus(!showViewedStatus)}
-          >
+          
             {showViewedStatus ? (
               <Entypo name="chevron-up" color={Colors.Grayrgba} size={18} />
             ) : (
               <Entypo name="chevron-down" color={Colors.Grayrgba} size={18} />
             )}
           </TouchableOpacity>
-        </View>
         {showViewedStatus && (
           <FlatList
             scrollEnabled={false}
