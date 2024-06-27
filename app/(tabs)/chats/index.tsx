@@ -3,7 +3,9 @@ import {
   StyleSheet,
   View,
   TouchableOpacity,
-  TextInput
+  TextInput,
+  Text,
+  Alert
 } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
 import Colors from "@/constants/Colors";
@@ -13,7 +15,7 @@ import {
   Octicons,
   SimpleLineIcons,
 } from "@expo/vector-icons";
-import { Link, Stack, } from "expo-router";
+import { Link, Stack, router, } from "expo-router";
 import { FIREBASE_AUTH, FIRESTORE_APP } from "@/firebaseConfig";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import GlobalContext from "@/context/Context";
@@ -27,6 +29,7 @@ const index = () => {
   const { rooms, setRooms, setUnfilteredRooms } = useContext<any>(GlobalContext);
   const contacts=useContacts()
   const [searchText, setSearchText] = useState("");
+  const [showOption, setShowOption] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   useEffect(() => {
     if (searchText == "") setSearchResults(rooms);
@@ -68,6 +71,20 @@ useEffect(() => {
     return () => unsubscribe();
   }, [])
 
+  const logout=() => {
+    Alert.alert('Logout','Are you sure you want to logout?'
+       ,[
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          { text: "OK", onPress: () => {
+    FIREBASE_AUTH.signOut();
+    router.navigate('/');}}
+        ]
+      );
+    
+  };
   
   return (
     <>
@@ -80,7 +97,7 @@ useEffect(() => {
                 <TouchableOpacity onPress={image}>
                 <Feather name="camera" size={25} color={Colors.muted}/>
               </TouchableOpacity>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={()=>setShowOption(!showOption)}>
               <SimpleLineIcons
                 name="options-vertical"
                 size={20}
@@ -95,6 +112,14 @@ useEffect(() => {
         contentInsetAdjustmentBehavior="automatic"
         style={styles.container}
       >
+        {showOption && <View style={{position:'absolute',top:0,right:0,padding:15,gap:15,width:100,borderRadius:10,zIndex:999,backgroundColor:'#f2f4f1'}}>
+                <TouchableOpacity style={{flex:1}}>
+                  <Text style={{fontWeight:'800',textAlign:'center',color:Colors.muted}}>Setting</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{flex:1}} onPress={logout}>  
+                  <Text style={{fontWeight:'800',textAlign:'center',color:Colors.muted}}>Logout</Text>
+                </TouchableOpacity>
+                </View>}
         <View style={styles.searchBar}>
           <Octicons name="search" size={20} color={Colors.lightGray} />
           <TextInput
@@ -147,6 +172,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 15,
+    paddingTop:0,
     backgroundColor: '#FFF',
   },
   searchBar: {
@@ -154,6 +180,7 @@ const styles = StyleSheet.create({
     height: 40,
     gap: 5,
     backgroundColor: Colors.background,
+    marginTop:15,
     borderRadius: 20,
     paddingLeft: 10,
     paddingRight: 10,

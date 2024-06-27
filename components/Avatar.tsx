@@ -5,7 +5,8 @@ type avatarProps={
   user: any;
   size: number;
 }
-const Avatar:React.FC<avatarProps>=({ size, user })=> { 
+
+const Avatar:React.FC<avatarProps>=({ size=60, user})=> { 
   const [photo, setPhoto] = useState(user?.photoURL?user.photoURL:null)
   return (
     <Image

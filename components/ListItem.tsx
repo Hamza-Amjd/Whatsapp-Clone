@@ -8,6 +8,7 @@ import { useNavigation } from "expo-router";
 import Avatar from "./Avatar";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { FIREBASE_AUTH } from "@/firebaseConfig";
+import { format } from "date-fns";
 type ListItemProps = {
   type: string;
   lastMessageSender: any|null;
@@ -32,6 +33,15 @@ const ListItem: React.FC<ListItemProps> = ({
     Animated.createAnimatedComponent(TouchableOpacity);
   const navigation = useNavigation<any>();
   const {currentUser}= FIREBASE_AUTH;
+  const handleTime = () => {
+    const today=new Date();
+    const chattime = new Date(time.seconds * 1000);
+    if (chattime.toLocaleDateString()== today.toLocaleDateString()) {
+      return format(chattime, "hh:mm a");
+    } else {
+      return new Date(time.seconds * 1000).toLocaleDateString();;
+    }
+  };
   return (
     <AppleStyleSwipeableRow>
       <AnimatedTouchableOpacity
@@ -59,9 +69,10 @@ const ListItem: React.FC<ListItemProps> = ({
             <Text
               style={{
                 fontSize: 12,
+                color:'grey'
               }}
             >
-              {new Date(time.seconds * 1000).toLocaleDateString()}
+              {handleTime()}
             </Text>
           )}
               </View>

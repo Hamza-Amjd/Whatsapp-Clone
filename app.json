@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "whatsapp",
+    "name": "WhatsApp",
     "slug": "whatsapp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,7 +21,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#41c452"
       },
       "package": "com.hamzaamjd.whatsapp"
     },

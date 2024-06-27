@@ -1,4 +1,4 @@
-rootProject.name = 'whatsapp'
+rootProject.name = 'WhatsApp'
 
 dependencyResolutionManagement {
   versionCatalogs {
