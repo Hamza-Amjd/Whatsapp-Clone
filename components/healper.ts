@@ -4,6 +4,27 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import { nanoid }from 'nanoid'
 import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+export const addToAsyncStorage = async (key:string, values:any) => {
+    try {
+      await AsyncStorage.setItem(key, JSON.stringify(values));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+  
+  export const getFromAsyncStorage = async (key:string) => {
+    try {
+      const res = await AsyncStorage.getItem(key);
+      if (res) {
+        return { success: true, data: JSON.parse(res) };
+      }
+    } catch (error) {
+      return { success: false, error };
+    }
+  };
 
 export const getImage = async (reference: any) => {
     return await getDownloadURL(ref(FIREBASE_STORAGE, reference));

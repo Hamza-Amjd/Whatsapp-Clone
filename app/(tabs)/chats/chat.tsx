@@ -1,4 +1,5 @@
 import {
+  Alert,
   Image,
   ImageBackground,
   StyleSheet,
@@ -14,14 +15,15 @@ import { Bubble, GiftedChat, IMessage, InputToolbar, Send, Time } from "react-na
 import { Swipeable } from "react-native-gesture-handler";
 import ReplyMessageBar from "@/components/ReplyMessageBar";
 import ChatMessageBox from "@/components/ChatMessageBox";
-import { collection, doc,addDoc, setDoc, onSnapshot, updateDoc } from "firebase/firestore";
+import { collection, doc,addDoc, setDoc, onSnapshot, updateDoc, deleteField } from "firebase/firestore";
 import { FIREBASE_AUTH, FIRESTORE_APP } from "@/firebaseConfig";
-import "react-native-get-random-values";
-import { nanoid }from 'nanoid'
 import { useRoute } from "@react-navigation/native";
 import { pickImage, uploadImage } from "@/components/healper";
 import ImageView from "react-native-image-viewing";
 import Avatar from "@/components/Avatar";
+import "react-native-get-random-values";
+import { nanoid }from 'nanoid'
+import OptionsButton from "@/components/OptionsButton";
 
 const randomId =nanoid()
 
@@ -113,9 +115,9 @@ useEffect(() => {
     [messages]
   );
 
-  async function onSend(messages = []) {
-    const writes:any = messages.map((m) => addDoc(roomMessagesRef, m));
-    const lastMessage = messages[messages.length - 1];
+  async function onSend(message = []) {
+    const writes:any = message.map((m) => addDoc(roomMessagesRef, m));
+    const lastMessage = message[message.length - 1];
     writes.push(updateDoc(roomRef, { lastMessage }));
     await Promise.all(writes);
   }
@@ -150,7 +152,7 @@ async function handlePhotoPicker() {
     return (
       <InputToolbar
         {...props}
-        containerStyle={{ backgroundColor: Colors.background,paddingVertical:6}}
+        containerStyle={{ backgroundColor: Colors.background,paddingVertical:3}}
         renderActions={() => (
           <View style={{ height: 44, justifyContent: 'center', alignItems: 'center', left: 5 }}>
             <Ionicons name="add" color={Colors.primary} size={28} />
@@ -179,7 +181,30 @@ async function handlePhotoPicker() {
     }
   }, [replyMessage]);
 
-
+  const clearChat=()=>{
+    Alert.alert("Clear this Chat?","This action is not reversable ",[
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Clear chat',
+        onPress: async() => {setMessages([]);
+          try{
+            await updateDoc(roomRef, {
+            roomMessagesRef: deleteField()
+        });
+          }catch(err){
+            console.log(err)
+          }
+          
+        },
+        style: 'destructive',
+      },
+    ],);}
+  const options= [
+    {name: 'Clear chat', function:clearChat}
+]
   return (
     <>
       <Stack.Screen
@@ -205,11 +230,12 @@ async function handlePhotoPicker() {
               style={{ flexDirection: "row", alignItems: "center", gap: 15 }}
             >
               <TouchableOpacity>
-                <Feather name="phone" size={26} color={Colors.muted} />
+                <Feather name="phone" size={25} color={Colors.muted} />
               </TouchableOpacity>
               <TouchableOpacity>
-                <Feather name="video" size={30} color={Colors.muted} />
+                <Feather name="video" size={25} color={Colors.muted} />
               </TouchableOpacity>
+              <OptionsButton options={options}/>
             </View>
           ),
         }}
@@ -223,9 +249,9 @@ async function handlePhotoPicker() {
           onSend={(messages: any) => onSend(messages)}
           user={senderUser}
           onInputTextChanged={setText}
-          bottomOffset={20}
+          bottomOffset={200}
           textInputProps={styles.composer}
-          maxComposerHeight={60}
+          maxComposerHeight={100}
           timeTextStyle={{right:{color:Colors.Grayrgba}}}
           
           renderBubble={(props) => (
@@ -298,6 +324,7 @@ async function handlePhotoPicker() {
                       visible={modalVisible}
                       onRequestClose={() => setModalVisible(false)}
                       images={[{ uri: selectedImageView }]}
+                      
                     />
                   ) : null}
                 </TouchableOpacity>

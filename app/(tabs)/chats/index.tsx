@@ -23,6 +23,7 @@ import useContacts from "@/hooks/useHooks";
 import ListItem from "@/components/ListItem";
 import { pickImage } from "@/components/healper";
 import { useNavigation } from "@react-navigation/native";
+import OptionsButton from "@/components/OptionsButton";
 
 const index = () => {
   const navigation:any=useNavigation();
@@ -85,7 +86,9 @@ useEffect(() => {
       );
     
   };
-  
+  const options= [
+    {name: 'Logout', function:logout}
+]
   return (
     <>
       <Stack.Screen
@@ -97,13 +100,7 @@ useEffect(() => {
                 <TouchableOpacity onPress={image}>
                 <Feather name="camera" size={25} color={Colors.muted}/>
               </TouchableOpacity>
-              <TouchableOpacity onPress={()=>setShowOption(!showOption)}>
-              <SimpleLineIcons
-                name="options-vertical"
-                size={20}
-                color={Colors.muted}
-              />
-              </TouchableOpacity>
+              <OptionsButton options={options}/> 
             </View>
           ),
         }}
@@ -112,14 +109,6 @@ useEffect(() => {
         contentInsetAdjustmentBehavior="automatic"
         style={styles.container}
       >
-        {showOption && <View style={{position:'absolute',top:0,right:0,padding:15,gap:15,width:100,borderRadius:10,zIndex:999,backgroundColor:'#f2f4f1'}}>
-                <TouchableOpacity style={{flex:1}}>
-                  <Text style={{fontWeight:'800',textAlign:'center',color:Colors.muted}}>Setting</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={{flex:1}} onPress={logout}>  
-                  <Text style={{fontWeight:'800',textAlign:'center',color:Colors.muted}}>Logout</Text>
-                </TouchableOpacity>
-                </View>}
         <View style={styles.searchBar}>
           <Octicons name="search" size={20} color={Colors.lightGray} />
           <TextInput

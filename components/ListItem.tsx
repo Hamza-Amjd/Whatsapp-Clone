@@ -1,5 +1,5 @@
 import { Button, Image, StyleSheet, Text, View } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import AppleStyleSwipeableRow from "./AppleStyleSwipableRow";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -8,7 +8,9 @@ import { useNavigation } from "expo-router";
 import Avatar from "./Avatar";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { FIREBASE_AUTH } from "@/firebaseConfig";
+import ImageView from "react-native-image-viewing";
 import { format } from "date-fns";
+
 type ListItemProps = {
   type: string;
   lastMessageSender: any|null;
@@ -32,6 +34,8 @@ const ListItem: React.FC<ListItemProps> = ({
   const AnimatedTouchableOpacity =
     Animated.createAnimatedComponent(TouchableOpacity);
   const navigation = useNavigation<any>();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImageView, setSeletedImageView] = useState("");
   const {currentUser}= FIREBASE_AUTH;
   const handleTime = () => {
     const today=new Date();
@@ -53,7 +57,24 @@ const ListItem: React.FC<ListItemProps> = ({
       >
         <View style={styles.listitem}>
           <View style={{ flexDirection: "row", gap: 8 }}>
-            <Avatar user={type == "contacts" ?user?.userdoc:user} size={type === "contacts" ? 40 : 60} />
+          <TouchableOpacity
+                  onPress={() => {
+                    setModalVisible(true);
+                    setSeletedImageView(user.photoURL);
+                  }}
+                ><Avatar user={type == "contacts" ?user?.userdoc:user} size={type === "contacts" ? 40 : 60} />
+                  {selectedImageView ? (
+                    <ImageView
+                    backgroundColor={Colors.background}
+                      imageIndex={0}
+                      visible={modalVisible}
+                      onRequestClose={() => setModalVisible(false)}
+                      images={[{ uri: selectedImageView }]}
+                      
+                    />
+                  ) : null}
+                </TouchableOpacity>
+            
             <View style={{flex:1,paddingVertical:3}}>
               <View style={{flexDirection:'row', flex:1, justifyContent:'space-between', alignItems:'baseline'}}>
                 <Text
