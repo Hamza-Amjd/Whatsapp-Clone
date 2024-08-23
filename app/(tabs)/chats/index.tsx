@@ -81,7 +81,8 @@ useEffect(() => {
           },
           { text: "OK", onPress: () => {
     FIREBASE_AUTH.signOut();
-    router.navigate('/');}}
+    router.navigate('/');
+  setRooms([])}}
         ]
       );
     
