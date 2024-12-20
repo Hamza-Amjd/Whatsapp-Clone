@@ -51,7 +51,7 @@ const InitialLayout = () => {
     <Stack>
       
           <Stack.Screen name="index" options={{ headerShown: false,statusBarColor:"white" }} />
-         <Stack.Screen name="SetProfile"  options={{ headerShown: false }} />
+         <Stack.Screen name="setProfile"  options={{ headerShown: false }} />
          <Stack.Screen  name="(tabs)" options={{ headerShown: false,statusBarColor:Colors.background }} />
          <Stack.Screen
         name="otp"

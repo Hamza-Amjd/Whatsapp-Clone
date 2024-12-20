@@ -18,14 +18,29 @@ import ChatMessageBox from "@/components/ChatMessageBox";
 import { collection, doc,addDoc, setDoc, onSnapshot, updateDoc, deleteField } from "firebase/firestore";
 import { FIREBASE_AUTH, FIRESTORE_APP } from "@/firebaseConfig";
 import { useRoute } from "@react-navigation/native";
-import { pickImage, uploadImage } from "@/components/healper";
+import { pickImage, uploadImage, uploadVideo } from "@/components/healper";
 import ImageView from "react-native-image-viewing";
 import Avatar from "@/components/Avatar";
 import "react-native-get-random-values";
+import * as ImagePicker from "expo-image-picker";
 import { nanoid }from 'nanoid'
 import OptionsButton from "@/components/OptionsButton";
+import Video from 'react-native-video';
 
 const randomId =nanoid()
+
+const VideoMessage = ({ currentMessage }: any) => {
+  return (
+    <View style={{ borderRadius: 15, overflow: 'hidden' }}>
+      <Video
+        source={{ uri: currentMessage.video }}
+        style={{ width: 200, height: 200 }}
+        controls
+        resizeMode="contain"
+      />
+    </View>
+  );
+};
 
 const chatpage = () => {
   const route:any = useRoute();
@@ -140,7 +155,24 @@ async function sendImage(uri:any, roomPath:any) {
     updateDoc(roomRef, { lastMessage }),
   ]);
 }
-
+async function sendVideo(uri:any) {
+  const { url, fileName } = await uploadVideo(
+    uri,
+    `images/rooms/${roomHash}`,null
+  );
+  const message = {
+    _id: fileName,
+    text: "",
+    createdAt: new Date(),
+    user: senderUser,
+    video: url,
+  };
+  const lastMessage = { ...message, text: "Video" };
+  await Promise.all([
+    addDoc(roomMessagesRef, message),
+    updateDoc(roomRef, { lastMessage }),
+  ]);
+}
 async function handlePhotoPicker() {
   const result:any = await pickImage();
   if (!result.cancelled) {
@@ -148,6 +180,13 @@ async function handlePhotoPicker() {
   }
 }
 
+async function handleVideoPicker() {
+  const result:any = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Videos,});
+  if (!result.cancelled) {
+    await sendVideo(result.assets[0].uri);
+  }
+}
   const renderInputToolbar = (props: any) => {
     return (
       <InputToolbar
@@ -270,6 +309,7 @@ async function handlePhotoPicker() {
               {text === '' && (
               <>
                 <Ionicons name="camera-outline" color={Colors.primary} size={28} onPress={handlePhotoPicker} />
+                <Ionicons name="videocam-outline" color={Colors.primary} size={28} onPress={handleVideoPicker} />
                 <Ionicons name="mic-outline" color={Colors.primary} size={28} />
               </>
             )}
@@ -296,7 +336,7 @@ async function handlePhotoPicker() {
               updateRowRef={updateRowRef}
             />
           )}
-          
+          renderMessageVideo={(props:any) => <VideoMessage {...props} />}
           renderMessageImage={(props:any) => {
             return (
               <View style={{ borderRadius: 15, padding: 2 }}>

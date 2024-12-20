@@ -20,9 +20,9 @@ const OptionsButton: React.FC<optionbuttonProps> = ({ options }) => {
       <TouchableOpacity onPress={() => setShowOptions(true)}>
         <Ionicons name="ellipsis-vertical" size={25} color={Colors.muted} />
       </TouchableOpacity>
-      <Modal transparent visible={showOptions}>
-        <SafeAreaView
-          style={{ flex: 1 }}
+      <Modal transparent statusBarTranslucent visible={showOptions}>
+        <View
+          style={{ flex: 1 ,backgroundColor:'rgba(2,2,2,0.4)'}}
           onTouchEnd={() => setShowOptions(false)}
         >
           <View style={styles.popup}>
@@ -36,7 +36,7 @@ const OptionsButton: React.FC<optionbuttonProps> = ({ options }) => {
               );
             })}
           </View>
-        </SafeAreaView>
+        </View>
       </Modal>
     </>
   );
@@ -46,10 +46,10 @@ export default OptionsButton;
 
 const styles = StyleSheet.create({
   popup: {
-    backgroundColor: "#d8dee3",
+    backgroundColor: "#EFEEF6",
     padding: 15,
     borderRadius: 10,
-    top: 50,
+    top: 85,
     right: 25,
     alignSelf: "flex-end",
     elevation: 5,

@@ -68,3 +68,30 @@ export const getImage = async (reference: any) => {
   
     return { url, fileName };
   }
+
+export const uploadVideo = async (uri: any, path: any, fName: any) => {
+    const blob: any = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+            resolve(xhr.response);
+        };
+        xhr.onerror = function (e) {
+            console.log(e);
+            reject(new TypeError("Network request failed"));
+        };
+        xhr.responseType = "blob";
+        xhr.open("GET", uri, true);
+        xhr.send(null);
+    });
+
+    const fileName = fName || nanoid();
+    const videoRef = ref(FIREBASE_STORAGE, `${path}/${fileName}.mp4`);
+
+    const snapshot = await uploadBytes(videoRef, blob, { contentType: "video/mp4" });
+
+    blob.close();
+
+    const url = await getDownloadURL(snapshot.ref);
+
+    return { url, fileName };
+};

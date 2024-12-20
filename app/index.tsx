@@ -16,6 +16,7 @@ import Colors from "@/constants/Colors";
 import { router } from "expo-router";
 import { FIREBASE_AUTH, signIn, signUp } from "@/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
 LogBox.ignoreLogs([
   "Setting a timer",
   "You are initializing Firebase Auth for React Native without providing AsyncStorage.",
@@ -32,7 +33,7 @@ const index = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user: any) => {
       if (user) {
-        router.push("/SetProfile");
+        router.push("/setProfile");
       }
     });
     return () => unsubscribe();
@@ -40,7 +41,7 @@ const index = () => {
   const handleLogin = async() => {
     setLoading(true);
     if (mode == "signin") {
-      await signIn(email, password).catch((err)=>console.log(err)).finally(()=>setLoading(false));
+      await signIn(email, password).catch((err:FirebaseError)=>Alert.alert(err.name,err.message)).finally(()=>setLoading(false));
     }
     if (mode == "signup") {
       await signUp(email, password).finally(()=>setLoading(false));

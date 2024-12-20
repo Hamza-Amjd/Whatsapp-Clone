@@ -18,7 +18,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { router, useNavigation } from "expo-router";
 
 
-const SetProfile = () => {
+const setProfile = () => {
   const [selectedImg, setselectedImg] = useState<ImagePickerAsset>();
   const [displayName, setDisplayName] = useState("");
   const [permission, setPermission] = useState<PermissionStatus | null>(null);
@@ -125,7 +125,7 @@ const SetProfile = () => {
   );
 };
 
-export default SetProfile;
+export default setProfile;
 
 const styles = StyleSheet.create({
   container: {
