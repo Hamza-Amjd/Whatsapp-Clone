@@ -5,15 +5,14 @@ import {
   View,
 } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
-import {Stack, useLocalSearchParams} from "expo-router";
+import {Stack} from "expo-router";
 import Colors from "@/constants/Colors";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
-import {  FIRESTORE_APP } from "@/firebaseConfig";
+import {  FIREBASE_AUTH, FIRESTORE_APP } from "@/firebaseConfig";
 import useContacts from "@/hooks/useHooks";
 import GlobalContext from "@/context/Context";
 import ListItem from "@/components/ListItem";
 import { useRoute } from "@react-navigation/native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 type ContactProps = {
   contact:any,
@@ -53,7 +52,9 @@ return (
 }
 const newChat = () => {
   const route:any=useRoute()
-  const contacts = useContacts()
+  const allContacts = useContacts()
+  const {currentUser} = FIREBASE_AUTH;
+  const contacts= allContacts.filter((contact:any)=>contact.email!==currentUser?.email);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -63,7 +64,7 @@ const newChat = () => {
         item.contactName.toLowerCase().includes(searchText?.toLowerCase())
       ),);
   }, [searchText])
-  const image:any=route.params.image;
+  const image=route.params.image;
   return (
     <>
       <Stack.Screen
@@ -86,7 +87,7 @@ const newChat = () => {
           <ActivityIndicator size={"large"} />
         </View>
       ) : (
-        <GestureHandlerRootView style={{flex:1}}>
+        <>
           {searchResults.length>0?
            <FlatList
            data={searchResults}
@@ -106,7 +107,7 @@ const newChat = () => {
          
        />
           }
-          </GestureHandlerRootView>
+          </>
       )}
     </>
   );

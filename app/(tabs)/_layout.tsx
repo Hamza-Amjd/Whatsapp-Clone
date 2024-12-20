@@ -10,7 +10,6 @@ import { View } from 'react-native';
 export default function TabLayout() {
   const segments = useSegments();
   return (
-    <GestureHandlerRootView style={{flex:1}}>
     <Tabs
       screenOptions={{
         tabBarStyle:{
@@ -69,6 +68,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-    </GestureHandlerRootView>
   );
 }

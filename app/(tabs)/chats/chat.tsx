@@ -2,6 +2,8 @@ import {
   Alert,
   Image,
   ImageBackground,
+  KeyboardAvoidingView,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,118 +13,127 @@ import { Stack } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Bubble, GiftedChat, IMessage, InputToolbar, Send, Time } from "react-native-gifted-chat";
-import { Swipeable } from "react-native-gesture-handler";
+import {
+  Bubble,
+  GiftedChat,
+  IMessage,
+  InputToolbar,
+  MessageVideoProps,
+  Send,
+  Time,
+} from "react-native-gifted-chat";
+import { Swipeable, TextInput } from "react-native-gesture-handler";
 import ReplyMessageBar from "@/components/ReplyMessageBar";
 import ChatMessageBox from "@/components/ChatMessageBox";
-import { collection, doc,addDoc, setDoc, onSnapshot, updateDoc, deleteField } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  onSnapshot,
+  updateDoc,
+  deleteField,
+} from "firebase/firestore";
 import { FIREBASE_AUTH, FIRESTORE_APP } from "@/firebaseConfig";
 import { useRoute } from "@react-navigation/native";
 import { pickImage, uploadImage, uploadVideo } from "@/components/healper";
-import ImageView from "react-native-image-viewing";
 import Avatar from "@/components/Avatar";
 import "react-native-get-random-values";
 import * as ImagePicker from "expo-image-picker";
-import { nanoid }from 'nanoid'
+import { nanoid } from "nanoid";
 import OptionsButton from "@/components/OptionsButton";
-import Video from 'react-native-video';
+import CustomVideoMessage from "@/components/CustomVideoMessage";
+import CustomImageMessage from "@/components/CustomImageMessage";
+import MediaModal from "@/components/MediaModal";
+import { ResizeMode, Video } from "expo-av";
+import Spinner from "@/components/Spinner";
 
-const randomId =nanoid()
-
-const VideoMessage = ({ currentMessage }: any) => {
-  return (
-    <View style={{ borderRadius: 15, overflow: 'hidden' }}>
-      <Video
-        source={{ uri: currentMessage.video }}
-        style={{ width: 200, height: 200 }}
-        controls
-        resizeMode="contain"
-      />
-    </View>
-  );
-};
+const randomId = nanoid();
 
 const chatpage = () => {
-  const route:any = useRoute();
-  const userB:any = route.params.user;
-  const room:any = route.params.room;
-  const selectedImage:any = route.params.image;
+  const route: any = useRoute();
+  const userB: any = route.params.user;
+  const room: any = route.params.room;
+  const selectedImage: any = route.params.image;
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImageView, setSeletedImageView] = useState("");
-  const [text, setText] = useState('');
-  const [roomHash, setRoomHash] = useState('');
+  const [text, setText] = useState("");
+  const [roomHash, setRoomHash] = useState("");
   const [replyMessage, setReplyMessage] = useState<IMessage | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [mediaModal, setMediaModal] = useState<any>();
   const swipeableRowRef = useRef<Swipeable | null>(null);
-  const {currentUser}= FIREBASE_AUTH;
+  const { currentUser } = FIREBASE_AUTH;
 
-  const senderUser:any = currentUser?.photoURL
-  ? {
-      name: currentUser.displayName,
-      _id: currentUser.uid,
-      avatar: currentUser.photoURL,
-    }
-  : { name: currentUser?.displayName, _id: currentUser?.uid };
- 
-const roomId =  room?room.id:randomId;
+  const senderUser: any = currentUser?.photoURL
+    ? {
+        name: currentUser.displayName,
+        _id: currentUser.uid,
+        avatar: currentUser.photoURL,
+      }
+    : { name: currentUser?.displayName, _id: currentUser?.uid };
 
-const roomRef = doc(FIRESTORE_APP, "rooms", roomId);
-const roomMessagesRef = collection(FIRESTORE_APP, "rooms", roomId, "messages");
- 
-useEffect(() => {
-  (async () => {
-    
-    if (!room) {
-      const currUserData:any = {
-        displayName: currentUser?.displayName,
-        email: currentUser?.email,
-      };
-      if (currentUser?.photoURL) {
-        currUserData.photoURL = currentUser.photoURL;
+  const roomId = room ? room.id : randomId;
+
+  const roomRef = doc(FIRESTORE_APP, "rooms", roomId);
+  const roomMessagesRef = collection(
+    FIRESTORE_APP,
+    "rooms",
+    roomId,
+    "messages"
+  );
+
+  useEffect(() => {
+    (async () => {
+      if (!room) {
+        const currUserData: any = {
+          displayName: currentUser?.displayName,
+          email: currentUser?.email,
+        };
+        if (currentUser?.photoURL) {
+          currUserData.photoURL = currentUser.photoURL;
+        }
+        const userBData: any = {
+          displayName: userB.contactName || userB.displayName || "",
+          email: userB.email,
+        };
+        if (userB.userdoc.photoURL) {
+          userBData.photoURL = userB.userdoc.photoURL;
+        }
+        const roomData = {
+          participants: [currUserData, userBData],
+          participantsArray: [currentUser?.email, userB.email],
+        };
+        try {
+          await setDoc(roomRef, roomData);
+        } catch (error) {
+          console.log(error);
+        }
       }
-      const userBData:any = {
-        displayName: userB.contactName || userB.displayName || "",
-        email: userB.email,
-      };
-      if (userB.userdoc.photoURL) {
-        userBData.photoURL = userB.userdoc.photoURL;
-      }
-      const roomData = {
-        participants: [currUserData, userBData],
-        participantsArray: [currentUser?.email, userB.email],
-      };
-      try {
-        await setDoc(roomRef, roomData);
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    const emailHash = `${currentUser?.email}:${userB.email}`;
+      const emailHash = `${currentUser?.email}:${userB.email}`;
       setRoomHash(emailHash);
       if (selectedImage && selectedImage.uri) {
-        console.log("chatimg :",selectedImage)
-        await sendImage(selectedImage.uri, emailHash);
+        setMediaModal(selectedImage)
       }
-  })();
-}, []);
+    })();
+  }, []);
 
-useEffect(() => {
-  const unsubscribe = onSnapshot(roomMessagesRef, (querySnapshot) => {
-    const messagesFirestore = querySnapshot
-      .docChanges()
-      .filter(({ type }) => type === "added")
-      .map(({ doc }) => {
-        const message = doc.data();
-        return { ...message, createdAt: message.createdAt.toDate() };
-      })
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    appendMessages(messagesFirestore);
-  });
-  return () => unsubscribe();
-}, []);
-   
+  useEffect(() => {
+    const unsubscribe = onSnapshot(roomMessagesRef, (querySnapshot) => {
+      const messagesFirestore = querySnapshot
+        .docChanges()
+        .filter(({ type }) => type === "added")
+        .map(({ doc }) => {
+          const message = doc.data();
+          return { ...message, createdAt: message.createdAt.toDate() };
+        })
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      appendMessages(messagesFirestore);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const appendMessages = useCallback(
-    (messages:any) => {
+    (messages: any) => {
       setMessages((previousMessages) =>
         GiftedChat.append(previousMessages, messages)
       );
@@ -131,71 +142,76 @@ useEffect(() => {
   );
 
   async function onSend(message = []) {
-    const writes:any = message.map((m) => addDoc(roomMessagesRef, m));
+    const writes: any = message.map((m) => addDoc(roomMessagesRef, m));
     const lastMessage = message[message.length - 1];
     writes.push(updateDoc(roomRef, { lastMessage }));
     await Promise.all(writes);
   }
-;
-async function sendImage(uri:any, roomPath:any) {
-  const { url, fileName } = await uploadImage(
-    uri,
-    `images/rooms/${roomPath || roomHash}`,null
-  );
-  const message = {
-    _id: fileName,
-    text: "",
-    createdAt: new Date(),
-    user: senderUser,
-    image: url,
-  };
-  const lastMessage = { ...message, text: "Image" };
-  await Promise.all([
-    addDoc(roomMessagesRef, message),
-    updateDoc(roomRef, { lastMessage }),
-  ]);
-}
-async function sendVideo(uri:any) {
-  const { url, fileName } = await uploadVideo(
-    uri,
-    `images/rooms/${roomHash}`,null
-  );
-  const message = {
-    _id: fileName,
-    text: "",
-    createdAt: new Date(),
-    user: senderUser,
-    video: url,
-  };
-  const lastMessage = { ...message, text: "Video" };
-  await Promise.all([
-    addDoc(roomMessagesRef, message),
-    updateDoc(roomRef, { lastMessage }),
-  ]);
-}
-async function handlePhotoPicker() {
-  const result:any = await pickImage();
-  if (!result.cancelled) {
-    await sendImage(result.assets[0].uri,null);
+  async function sendMedia(uri: any,type: "image" | "video",caption="",roomPath=roomHash) {
+    setIsLoading(true);
+    const uploadFunction = type === "image" ? uploadImage : uploadVideo;
+    const { url, fileName } = await uploadFunction(
+      uri,
+      `images/rooms/${roomPath}`,
+      null
+    );
+    const message = {
+      _id: fileName,
+      text: caption,
+      createdAt: new Date(),
+      user: senderUser,
+      [type]: url,
+    };
+    const lastMessage = {
+      ...message,
+      text: type.charAt(0).toUpperCase() + type.slice(1),
+    };
+    await Promise.all([
+      addDoc(roomMessagesRef, message),
+      updateDoc(roomRef, { lastMessage }),
+    ]).finally(() => {
+      setMediaModal(undefined);
+      setIsLoading(false);
+    });
   }
-}
+  async function handlePicker(type: "image" | "video" | "library") {
+    let result: any = [];
 
-async function handleVideoPicker() {
-  const result:any = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Videos,});
-  if (!result.cancelled) {
-    await sendVideo(result.assets[0].uri);
+    if (type === "image") {
+      result = await pickImage();
+    } else if (type === "video") {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      });
+    } else {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+      });
+    }
+    if (!result.cancelled) {
+      setMediaModal(result.assets[0]);
+    }
   }
-}
   const renderInputToolbar = (props: any) => {
     return (
       <InputToolbar
         {...props}
-        containerStyle={{ backgroundColor: Colors.background,paddingVertical:3}}
+        containerStyle={{
+          backgroundColor: Colors.background,
+          paddingVertical: 3,
+        }}
         renderActions={() => (
-          <View style={{ height: 44, justifyContent: 'center', alignItems: 'center', left: 5 }}>
+          <TouchableOpacity
+            onPress={() => handlePicker("library")}
+            style={{
+              height: 44,
+              justifyContent: "center",
+              alignItems: "center",
+              left: 5,
+            }}
+          >
             <Ionicons name="add" color={Colors.primary} size={28} />
-          </View>
+          </TouchableOpacity>
         )}
       />
     );
@@ -220,30 +236,29 @@ async function handleVideoPicker() {
     }
   }, [replyMessage]);
 
-  const clearChat=()=>{
-    Alert.alert("Clear this Chat?","This action is not reversable ",[
+  const clearChat = () => {
+    Alert.alert("Clear this Chat?", "This action is not reversable ", [
       {
-        text: 'Cancel',
-        style: 'cancel',
+        text: "Cancel",
+        style: "cancel",
       },
       {
-        text: 'Clear chat',
-        onPress: async() => {setMessages([]);
-          try{
+        text: "Clear chat",
+        onPress: async () => {
+          setMessages([]);
+          try {
             await updateDoc(roomRef, {
-            roomMessagesRef: deleteField()
-        });
-          }catch(err){
-            console.log(err)
+              roomMessagesRef: deleteField(),
+            });
+          } catch (err) {
+            console.log(err);
           }
-          
         },
-        style: 'destructive',
+        style: "destructive",
       },
-    ],);}
-  const options= [
-    {name: 'Clear chat', function:clearChat}
-]
+    ]);
+  };
+  const options = [{ name: "Clear chat", function: clearChat }];
   return (
     <>
       <Stack.Screen
@@ -252,7 +267,7 @@ async function handleVideoPicker() {
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
             >
-              <Avatar user={userB?.userdoc?userB.userdoc:userB} size={40} />
+              <Avatar user={userB?.userdoc ? userB.userdoc : userB} size={40} />
 
               <Text
                 style={{
@@ -274,7 +289,7 @@ async function handleVideoPicker() {
               <TouchableOpacity>
                 <Feather name="video" size={25} color={Colors.muted} />
               </TouchableOpacity>
-              <OptionsButton options={options}/>
+              <OptionsButton options={options} />
             </View>
           ),
         }}
@@ -291,8 +306,7 @@ async function handleVideoPicker() {
           bottomOffset={200}
           textInputProps={styles.composer}
           maxComposerHeight={100}
-          timeTextStyle={{right:{color:Colors.Grayrgba}}}
-          
+          timeTextStyle={{ right: { color: Colors.Grayrgba } }}
           renderBubble={(props) => (
             <Bubble
               {...props}
@@ -301,32 +315,59 @@ async function handleVideoPicker() {
                 left: { backgroundColor: "#fff" },
                 right: { backgroundColor: Colors.lightGreen },
               }}
-              tickStyle={{ color:Colors.green}}
+              tickStyle={{ color: Colors.green }}
             />
           )}
           renderSend={(props) => (
-            <View style={{ alignItems: "center", justifyContent: "center" ,flexDirection:'row',gap:14,paddingHorizontal:14,height:44}}>
-              {text === '' && (
-              <>
-                <Ionicons name="camera-outline" color={Colors.primary} size={28} onPress={handlePhotoPicker} />
-                <Ionicons name="videocam-outline" color={Colors.primary} size={28} onPress={handleVideoPicker} />
-                <Ionicons name="mic-outline" color={Colors.primary} size={28} />
-              </>
-            )}
-            {text !== '' && (
-              <Send
-                {...props}
-                containerStyle={{
-                  justifyContent: 'center',
-                }}>
-                <Ionicons name="send" color={Colors.primary} size={28} />
-              </Send>
-            )}
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                gap: 14,
+                paddingHorizontal: 14,
+                height: 44,
+              }}
+            >
+              {text === "" && (
+                <>
+                  <Ionicons
+                    name="camera-outline"
+                    color={Colors.primary}
+                    size={28}
+                    onPress={() => handlePicker("image")}
+                  />
+                  <Ionicons
+                    name="videocam-outline"
+                    color={Colors.primary}
+                    size={28}
+                    onPress={() => handlePicker("video")}
+                  />
+                  <Ionicons
+                    name="mic-outline"
+                    color={Colors.primary}
+                    size={28}
+                  />
+                </>
+              )}
+              {text !== "" && (
+                <Send
+                  {...props}
+                  containerStyle={{
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="send" color={Colors.primary} size={28} />
+                </Send>
+              )}
             </View>
           )}
           renderInputToolbar={renderInputToolbar}
           renderChatFooter={() => (
-            <ReplyMessageBar  clearReply={() => setReplyMessage(null)} message={replyMessage}  />
+            <ReplyMessageBar
+              clearReply={() => setReplyMessage(null)}
+              message={replyMessage}
+            />
           )}
           onLongPress={(context, message) => setReplyMessage(message)}
           renderMessage={(props) => (
@@ -336,50 +377,23 @@ async function handleVideoPicker() {
               updateRowRef={updateRowRef}
             />
           )}
-          renderMessageVideo={(props:any) => <VideoMessage {...props} />}
-          renderMessageImage={(props:any) => {
-            return (
-              <View style={{ borderRadius: 15, padding: 2 }}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setModalVisible(true);
-                    setSeletedImageView(props.currentMessage.image);
-                  }}
-                >
-                  <Image
-                    resizeMode="contain"
-                    style={{
-                      width: 200,
-                      height: 200,
-                      padding: 6,
-                      borderRadius: 15,
-                      resizeMode: "cover",
-                    }}
-                    source={{ uri: props.currentMessage.image }}
-                  />
-                  {selectedImageView ? (
-                    <ImageView
-                    backgroundColor={Colors.background}
-                      imageIndex={0}
-                      visible={modalVisible}
-                      onRequestClose={() => setModalVisible(false)}
-                      images={[{ uri: selectedImageView }]}
-                      
-                    />
-                  ) : null}
-                </TouchableOpacity>
-              </View>
-            );
-          }}
+          renderMessageVideo={(props: any) => (
+            <CustomVideoMessage props={props} />
+          )}
+          renderMessageImage={(props: any) => (
+            <CustomImageMessage props={props} />
+          )}
         />
       </ImageBackground>
+      {mediaModal && <MediaModal sendMedia={sendMedia} selectedMedia={mediaModal} onClose={()=>setMediaModal(undefined)} />}
+      {isLoading && <Spinner/>}
     </>
   );
 };
 
 const styles = StyleSheet.create({
   composer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 18,
     borderWidth: 1,
     borderColor: Colors.lightGray,
@@ -391,7 +405,4 @@ const styles = StyleSheet.create({
   },
 });
 
-
 export default chatpage;
-
-
