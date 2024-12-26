@@ -95,3 +95,30 @@ export const uploadVideo = async (uri: any, path: any, fName: any) => {
 
     return { url, fileName };
 };
+
+export const uploadAudio = async (uri: any, path: any, fName: any) => {
+    const blob: any = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+            resolve(xhr.response);
+        };
+        xhr.onerror = function (e) {
+            console.log(e);
+            reject(new TypeError("Network request failed"));
+        };
+        xhr.responseType = "blob";
+        xhr.open("GET", uri, true);
+        xhr.send(null);
+    });
+
+    const fileName = fName || nanoid();
+    const audioRef = ref(FIREBASE_STORAGE, `${path}/${fileName}.mp3`);
+
+    const snapshot = await uploadBytes(audioRef, blob, { contentType: "audio/mpeg" });
+
+    blob.close();
+
+    const url = await getDownloadURL(snapshot.ref);
+
+    return { url, fileName };
+};

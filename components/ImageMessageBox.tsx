@@ -4,7 +4,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import EnhancedImageViewing from 'react-native-image-viewing/dist/ImageViewing';
 import Colors from '@/constants/Colors';
 
-const CustomImageMessage = ({props}:any) => {
+const ImageMessageBox = ({props}:any) => {
 
 
   const [imageModalVisible, setImageModalVisible] = useState(false);
@@ -34,7 +34,7 @@ const CustomImageMessage = ({props}:any) => {
   )
 }
 
-export default CustomImageMessage
+export default ImageMessageBox
 
 const styles = StyleSheet.create({
     messageImg:{

@@ -100,7 +100,7 @@ const ListItem: React.FC<ListItemProps> = ({
               
               {description && (
                 <View style={{flexDirection:'row',alignItems:'center',gap:1}}>
-                  {description=='Image'?<Ionicons name="image" size={15} color={Colors.gray}/>:lastMessageSender?.name==currentUser?.displayName && <Ionicons name="checkmark-done-outline" size={20} color="cyan" /> }
+                  {description=='Image'?<Ionicons name="image" size={15} color={Colors.gray}/>:description=='Video'?<Ionicons name="videocam" size={15} color={Colors.gray}/>:description=='Audio'?<Ionicons name="mic" size={15} color={Colors.gray}/>:lastMessageSender?.name==currentUser?.displayName && <Ionicons name="checkmark-done-outline" size={20} color="cyan" /> }
                   
                   <Text style={{ fontSize: 14, fontWeight: "400" ,alignItems:'baseline',color:Colors.gray}}>
                     {description.length > 40? `${description.substring(0, 40)}...`

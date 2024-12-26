@@ -18,9 +18,7 @@ import {
   GiftedChat,
   IMessage,
   InputToolbar,
-  MessageVideoProps,
   Send,
-  Time,
 } from "react-native-gifted-chat";
 import { Swipeable, TextInput } from "react-native-gesture-handler";
 import ReplyMessageBar from "@/components/ReplyMessageBar";
@@ -33,20 +31,24 @@ import {
   onSnapshot,
   updateDoc,
   deleteField,
+  getDocs,
+  writeBatch,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIRESTORE_APP } from "@/firebaseConfig";
 import { useRoute } from "@react-navigation/native";
-import { pickImage, uploadImage, uploadVideo } from "@/components/healper";
+import { pickImage, uploadImage, uploadVideo, uploadAudio } from "@/components/healper";
 import Avatar from "@/components/Avatar";
 import "react-native-get-random-values";
 import * as ImagePicker from "expo-image-picker";
 import { nanoid } from "nanoid";
 import OptionsButton from "@/components/OptionsButton";
-import CustomVideoMessage from "@/components/CustomVideoMessage";
-import CustomImageMessage from "@/components/CustomImageMessage";
 import MediaModal from "@/components/MediaModal";
-import { ResizeMode, Video } from "expo-av";
 import Spinner from "@/components/Spinner";
+import AudioMessageRecordButton from "@/components/AudioMessageRecordButton";
+import VideoMessageBox from "@/components/VideoMessageBox";
+import ImageMessageBox from "@/components/ImageMessageBox";
+import AudioMessageBox from "@/components/AudioMessageBox";
+import { Audio } from "expo-av";
 
 const randomId = nanoid();
 
@@ -147,12 +149,12 @@ const chatpage = () => {
     writes.push(updateDoc(roomRef, { lastMessage }));
     await Promise.all(writes);
   }
-  async function sendMedia(uri: any,type: "image" | "video",caption="",roomPath=roomHash) {
+  async function sendMedia(uri: any, type: "image" | "video" | "audio", caption = "", roomPath = roomHash) {
     setIsLoading(true);
-    const uploadFunction = type === "image" ? uploadImage : uploadVideo;
+    const uploadFunction = type === "image" ? uploadImage : type === "video" ? uploadVideo : uploadAudio;
     const { url, fileName } = await uploadFunction(
       uri,
-      `images/rooms/${roomPath}`,
+      `media/rooms/${roomPath}`,
       null
     );
     const message = {
@@ -176,9 +178,10 @@ const chatpage = () => {
   }
   async function handlePicker(type: "image" | "video" | "library") {
     let result: any = [];
+    try{
 
-    if (type === "image") {
-      result = await pickImage();
+      if (type === "image") {
+        result = await pickImage();
     } else if (type === "video") {
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Videos,
@@ -188,8 +191,12 @@ const chatpage = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.All,
       });
     }
-    if (!result.cancelled) {
+    if (result) {
       setMediaModal(result.assets[0]);
+    }
+    }
+    catch(error){
+      console.log(error);
     }
   }
   const renderInputToolbar = (props: any) => {
@@ -245,20 +252,25 @@ const chatpage = () => {
       {
         text: "Clear chat",
         onPress: async () => {
+          // Clear local messages
           setMessages([]);
-          try {
-            await updateDoc(roomRef, {
-              roomMessagesRef: deleteField(),
-            });
-          } catch (err) {
-            console.log(err);
-          }
+          
+          // Clear messages from Firestore
+          const messagesQuery = collection(FIRESTORE_APP, "rooms", roomId, "messages");
+          const querySnapshot = await getDocs(messagesQuery);
+          const batch = writeBatch(FIRESTORE_APP);
+          querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
         },
         style: "destructive",
       },
     ]);
   };
   const options = [{ name: "Clear chat", function: clearChat }];
+
+  const sound = new Audio.Sound()
   return (
     <>
       <Stack.Screen
@@ -343,11 +355,7 @@ const chatpage = () => {
                     size={28}
                     onPress={() => handlePicker("video")}
                   />
-                  <Ionicons
-                    name="mic-outline"
-                    color={Colors.primary}
-                    size={28}
-                  />
+                 <AudioMessageRecordButton sendMedia={sendMedia}/>
                 </>
               )}
               {text !== "" && (
@@ -378,15 +386,19 @@ const chatpage = () => {
             />
           )}
           renderMessageVideo={(props: any) => (
-            <CustomVideoMessage props={props} />
+            <VideoMessageBox props={props} />
           )}
           renderMessageImage={(props: any) => (
-            <CustomImageMessage props={props} />
+            <ImageMessageBox props={props} />
+          )}
+          renderMessageAudio={(props: any) => (
+            <AudioMessageBox props={props} />
           )}
         />
       </ImageBackground>
       {mediaModal && <MediaModal sendMedia={sendMedia} selectedMedia={mediaModal} onClose={()=>setMediaModal(undefined)} />}
       {isLoading && <Spinner/>}
+      
     </>
   );
 };

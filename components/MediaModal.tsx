@@ -24,7 +24,7 @@ const MediaModal = ({selectedMedia,onClose,sendMedia}:mediaModalProps) => {
             }}
           >
             <TouchableOpacity
-              style={{ position: "absolute", right: 20, top: 50, zIndex: 10 }}
+              style={{ position: "absolute", right: 10, top: 50, zIndex: 10 }}
               onPress={onClose}
             >
               <Ionicons name="close-circle" size={40} color={"#fff"} />

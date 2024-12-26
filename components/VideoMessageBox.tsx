@@ -5,7 +5,7 @@ import VideoModal from "./VideoModal";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import { Ionicons } from "@expo/vector-icons";
 
-const CustomVideoMessage = ({ props }: any) => {
+const VideoMessageBox = ({ props }: any) => {
   const [videoModalVisible, setVideoModalVisible] = React.useState(false);
   const [image, setImage] = React.useState<string | null>(null);
   useEffect(() => {
@@ -82,4 +82,4 @@ const styles = StyleSheet.create({
   
 });
 
-export default CustomVideoMessage;
+export default VideoMessageBox;

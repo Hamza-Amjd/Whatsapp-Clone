@@ -55,24 +55,6 @@ const InitialLayout = () => {
           options={{ headerShown: false, statusBarColor: Colors.background }}
         />
         <Stack.Screen
-          name="otp"
-          options={{
-            headerTitle: "Enter your phone number",
-            headerBackVisible: false,
-            headerTitleAlign: "center",
-          }}
-        />
-        <Stack.Screen
-          name="verify/[phone]"
-          options={{
-            headerTitle: "Verify your phone number",
-            headerBackVisible: true,
-            headerTitleAlign: "center",
-            statusBarColor: Colors.background,
-          }}
-        />
-
-        <Stack.Screen
           name="(modals)/new-chat"
           options={{
             headerShown: true,
